@@ -3,23 +3,17 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 import re
 
-# =============================
 # MongoDB
-# =============================
 client = MongoClient("mongodb://localhost:27017/")
 db = client["MedlineHealth"]
 
 vector_col = db["Vector_KB"]
 
-# =============================
 # Embedding Model
-# =============================
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
-# =============================
 # Utility
-# =============================
 STOPWORDS = {
     "what", "is", "are", "the", "a", "an", "of", "for", "to", "in", "on",
     "and", "or", "with", "about", "explain", "why", "how", "does", "do",
@@ -50,10 +44,7 @@ def cosine_similarity(a, b):
 
     return float(np.dot(a, b) / (norm_a * norm_b))
 
-
-# =============================
 # Question Type Detection
-# =============================
 def detect_question_type(question):
     q = question.lower()
 
@@ -75,9 +66,8 @@ def detect_question_type(question):
     return "General"
 
 
-# =============================
 # Entity Extraction
-# =============================
+
 def extract_entity(question):
     q = question.lower()
 
@@ -100,9 +90,8 @@ def extract_entity(question):
     return " ".join(entity_words).strip()
 
 
-# =============================
 # Section Boost
-# =============================
+
 def section_boost(question_type, section):
     section = section.lower()
 
@@ -124,9 +113,8 @@ def section_boost(question_type, section):
     return 0.0
 
 
-# =============================
 # Keyword Overlap Boost
-# =============================
+
 def keyword_overlap_score(question, sentence):
     q_words = set(tokenize(question))
     s_words = set(tokenize(sentence))
@@ -138,9 +126,7 @@ def keyword_overlap_score(question, sentence):
     return len(overlap) / len(q_words)
 
 
-# =============================
 # Improved Vector Search
-# =============================
 def improved_vector_search(question, top_k=8):
     q_type = detect_question_type(question)
     entity = extract_entity(question)
@@ -207,9 +193,8 @@ def improved_vector_search(question, top_k=8):
     return scored_results[:top_k], q_type, entity
 
 
-# =============================
 # Format Answer
-# =============================
+
 def format_answer(results, q_type, entity):
     if not results:
         return "No answer found."
@@ -261,9 +246,7 @@ def format_answer(results, q_type, entity):
     return answer.strip()
 
 
-# =============================
 # Main QA
-# =============================
 def ask(question):
     results, q_type, entity = improved_vector_search(question)
 
@@ -276,9 +259,7 @@ def ask(question):
     print(answer)
 
 
-# =============================
 # Run
-# =============================
 if __name__ == "__main__":
     print("Medical QA System - Improved Vector Ranking")
     print("Type 'exit' to quit.")
