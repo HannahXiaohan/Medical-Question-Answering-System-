@@ -4,23 +4,21 @@ import numpy as np
 from pymongo import MongoClient
 from sentence_transformers import SentenceTransformer
 
-# ----------------------------
 # MongoDB
-# ----------------------------
 client = MongoClient("mongodb://localhost:27017/")
 db = client["MedlineHealth"]
 
 enc_col = db["Encyclopedia_KB"]
 vec_col = db["Vector_KB"]
 
-# ----------------------------
+
 # Model
-# ----------------------------
+
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# ----------------------------
+
 # Utils
-# ----------------------------
+
 def clean(text):
     text = text.lower()
     text = re.sub(r"[^a-z0-9\s]", " ", text)
@@ -36,9 +34,7 @@ def normalize_entity(q):
     return " ".join(words)
 
 
-# ----------------------------
 # Parse Question
-# ----------------------------
 def parse(q):
     ql = clean(q)
 
@@ -59,19 +55,14 @@ def parse(q):
 
     return "definition", normalize_entity(q)
 
-
-# ----------------------------
 # Find topic
-# ----------------------------
 def find_doc(entity):
     return enc_col.find_one({
         "topic_name": {"$regex": f"^{entity}$", "$options": "i"}
     })
 
 
-# ----------------------------
 # Section answers
-# ----------------------------
 def get_section(entity, q_type):
     doc = find_doc(entity)
     if not doc:
@@ -96,9 +87,7 @@ def get_section(entity, q_type):
     return list(dict.fromkeys(answers))
 
 
-# ----------------------------
 # Summary
-# ----------------------------
 def get_summary(entity):
     doc = find_doc(entity)
     if not doc:
@@ -107,9 +96,7 @@ def get_summary(entity):
     return [s["sentence"] for s in doc.get("summary", [])]
 
 
-# ----------------------------
 # Vector fallback
-# ----------------------------
 def cosine(a, b):
     a = np.array(a)
     b = np.array(b)
@@ -136,9 +123,7 @@ def vector_search(q):
     return [s for _, s in scored[:3]]
 
 
-# ----------------------------
 # Clean sentence
-# ----------------------------
 def refine(text, entity):
     text = text.strip()
 
@@ -152,9 +137,7 @@ def refine(text, entity):
     return text.strip()
 
 
-# ----------------------------
 # Generate Answer
-# ----------------------------
 def generate(entity, q_type, answers):
     if not answers:
         return None
@@ -183,9 +166,7 @@ def generate(entity, q_type, answers):
     return f"{entity_cap} {title}:\n" + "\n".join(lines)
 
 
-# ----------------------------
 # QA Pipeline
-# ----------------------------
 def answer(q):
     q_type, entity = parse(q)
 
@@ -193,7 +174,7 @@ def answer(q):
     print("Type:", q_type)
     print("Entity:", entity)
 
-    # 1. summary
+    # summary
     if q_type == "definition":
         ans = get_summary(entity)
         final = generate(entity, q_type, ans)
@@ -203,7 +184,7 @@ def answer(q):
             print(final)
             return
 
-    # 2. section
+    # section
     ans = get_section(entity, q_type)
     if ans:
         final = generate(entity, q_type, ans)
@@ -212,7 +193,7 @@ def answer(q):
         print(final)
         return
 
-    # 3. vector fallback
+    # vector fallback
     ans = vector_search(q)
     if ans:
         print("\nAnswer:")
@@ -222,9 +203,7 @@ def answer(q):
     print("\nNo answer found.")
 
 
-# ----------------------------
 # RUN
-# ----------------------------
 if __name__ == "__main__":
     print("🎯 CLEAN QA SYSTEM")
 
