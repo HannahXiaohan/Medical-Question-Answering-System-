@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medical QA System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 40px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        textarea, select, button {
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .answer {
+            margin-top: 25px;
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            border-left: 5px solid #2563eb;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Medical Question Answering System</h1>
+
+    <form method="POST">
+        <label>Choose QA System:</label>
+        <select name="system">
+            <option value="hybrid" {% if system == "hybrid" %}selected{% endif %}>Hybrid System</option>
+            <option value="vector" {% if system == "vector" %}selected{% endif %}>Vector Retrieval System</option>
+            <option value="triple" {% if system == "triple" %}selected{% endif %}>Triple-Based System</option>
+        </select>
+
+        <label>Enter your question:</label>
+        <textarea name="question" rows="4" placeholder="Example: What are the symptoms of asthma?">{{ question }}</textarea>
+
+        <button type="submit">Ask</button>
+    </form>
+
+    {% if result %}
+    <div class="answer">
+        <h3>Answer:</h3>
+        {{ result }}
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>
