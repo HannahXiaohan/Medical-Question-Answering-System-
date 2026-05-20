@@ -2,24 +2,19 @@ import re
 from pymongo import MongoClient
 from sentence_transformers import SentenceTransformer, util
 
-# -----------------------------
+
 # MongoDB
-# -----------------------------
 client = MongoClient("mongodb://localhost:27017/")
 db = client["MedlineHealth"]
 
 enc = db["Encyclopedia_KB"]
 vec = db["Vector_KB"]
 
-# -----------------------------
 # Embedding model
-# -----------------------------
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
-# -----------------------------
 # ENTITY EXTRACTION
-# -----------------------------
 def extract_entity(question):
     q = question.lower()
 
@@ -43,10 +38,7 @@ def extract_entity(question):
 
     return best_match
 
-
-# -----------------------------
 # QUESTION TYPE
-# -----------------------------
 def detect_type(question):
     q = question.lower()
 
@@ -62,18 +54,14 @@ def detect_type(question):
     return "definition"
 
 
-# -----------------------------
 # FIND TOPIC
-# -----------------------------
 def find_topic(entity):
     return enc.find_one({
         "topic_name": {"$regex": f"^{entity}$", "$options": "i"}
     })
 
 
-# -----------------------------
 # TRIPLE ANSWER
-# -----------------------------
 def answer_from_triples(entity, q_type):
     doc = find_topic(entity)
     if not doc:
@@ -95,9 +83,9 @@ def answer_from_triples(entity, q_type):
                 if not subj or not obj:
                     continue
 
-                # -------------------------
+            
                 # Definition
-                # -------------------------
+               
                 if q_type == "definition":
                     if entity_lower in subj and rel in ["is", "are", "refers to", "involves"]:
                         if original_sentence:
@@ -105,9 +93,8 @@ def answer_from_triples(entity, q_type):
                         else:
                             answers.append(f"{entity.capitalize()} {rel} {obj}.")
 
-                # -------------------------
                 # question types
-                # -------------------------
+                
                 else:
                     if entity_lower in subj:
                         if original_sentence:
@@ -121,9 +108,8 @@ def answer_from_triples(entity, q_type):
     return None, None
 
 
-# -----------------------------
+
 # SECTION ANSWER
-# -----------------------------
 def answer_from_section(entity, q_type):
     doc = find_topic(entity)
     if not doc:
@@ -140,10 +126,7 @@ def answer_from_section(entity, q_type):
 
     return None, None
 
-
-# -----------------------------
 # SUMMARY ANSWER
-# -----------------------------
 def answer_from_summary(entity):
     doc = find_topic(entity)
     if not doc:
@@ -163,10 +146,7 @@ def answer_from_summary(entity):
 
     return None, None
 
-
-# -----------------------------
 # VECTOR FALLBACK
-# -----------------------------
 def answer_from_vector(question):
     docs = list(vec.find().limit(500))
 
@@ -191,10 +171,7 @@ def answer_from_vector(question):
 
     return [best_text]
 
-
-# -----------------------------
 # FORMAT OUTPUT
-# -----------------------------
 def format_answer(entity, answers):
     result = f"\n{entity}:\n"
 
@@ -203,13 +180,9 @@ def format_answer(entity, answers):
 
     return result
 
-
-# -----------------------------
 #  MAIN QA FUNCTION
-# -----------------------------
 def qa_system(question):
     output = []
-    output.append("======================================")
     output.append(f"Question: {question}")
 
     entity = extract_entity(question)
@@ -221,36 +194,28 @@ def qa_system(question):
     if not entity:
         return "\n".join(output + ["No entity detected."])
 
-    # -------------------------
-    # 1. TRIPLE FIRST
-    # -------------------------
+    # TRIPLE FIRST
     answer, source = answer_from_triples(entity, q_type)
     if answer:
         output.append("\nAnswer (from triples):")
         output.append(format_answer(entity, answer))
         return "\n".join(output)
 
-    # -------------------------
-    # 2. SECTION
-    # -------------------------
+    # SECTION
     answer, source = answer_from_section(entity, q_type)
     if answer:
         output.append("\nAnswer (from section):")
         output.append(format_answer(entity, answer))
         return "\n".join(output)
 
-    # -------------------------
-    # 3. SUMMARY
-    # -------------------------
+    # SUMMARY
     answer, source = answer_from_summary(entity)
     if answer:
         output.append("\nAnswer (from summary):")
         output.append(format_answer(entity, answer))
         return "\n".join(output)
-
-    # -------------------------
-    # 4. VECTOR FALLBACK
-    # -------------------------
+        
+    #  VECTOR FALLBACK
     answer = answer_from_vector(question)
     output.append("\nAnswer (from vector):")
     output.append(format_answer(entity, answer))
@@ -258,9 +223,7 @@ def qa_system(question):
     return "\n".join(output)
 
 
-# -----------------------------
 # RUN LOOP
-# -----------------------------
 if __name__ == "__main__":
     print("🔥 Triple-Based QA System (Final)")
     print("Type 'exit' to quit.")
