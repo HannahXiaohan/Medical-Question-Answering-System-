@@ -3,19 +3,13 @@ import requests
 from pymongo import MongoClient
 import time
 
-# -----------------------------
 # Load NLP model
-# -----------------------------
 nlp = spacy.load("en_core_sci_sm")
 
-# -----------------------------
 # Stanford OpenIE server URL
-# -----------------------------
 OPENIE_URL = "http://localhost:9000/?properties={\"annotators\":\"openie\",\"outputFormat\":\"json\"}"
 
-# -----------------------------
 # Important Sections
-# -----------------------------
 IMPORTANT_SECTIONS = [
     "Symptoms", "Causes", "Exams", "Tests",
     "Treatment", "Risk", "Complications"
@@ -24,10 +18,7 @@ IMPORTANT_SECTIONS = [
 def is_important(section_name):
     return any(k.lower() in section_name.lower() for k in IMPORTANT_SECTIONS)
 
-
-# -----------------------------
 # Entity Filtering
-# -----------------------------
 STOP_ENTITIES = {
     "patient", "people", "person",
     "symptoms", "symptom",
@@ -76,17 +67,13 @@ def extract_entities(text):
     return list(entities)
 
 
-# -----------------------------
 # Negation detection
-# -----------------------------
 def detect_negation(text):
     neg_words = ["no", "not", "never", "without", "none"]
     return any(word in text.lower() for word in neg_words)
 
 
-# -----------------------------
 # Clean triples
-# -----------------------------
 def clean_triples(triples):
     cleaned = []
 
@@ -95,7 +82,7 @@ def clean_triples(triples):
         rel = t.get("relation", "").strip().lower()
         obj = t.get("object", "").strip().lower()
 
-        # ❌ basic filtering
+
         if len(subj) < 3 or len(obj) < 3:
             continue
 
@@ -108,11 +95,9 @@ def clean_triples(triples):
         if subj == obj:
             continue
 
-        # ❌ remove weak "are/is" triples unless meaningful
         if rel in ["is", "are"] and obj in ["disease", "diseases"]:
             continue
 
-        # 🔥 normalize object (take last word)
         obj = obj.split()[-1]
 
         cleaned.append({
@@ -124,9 +109,7 @@ def clean_triples(triples):
     return cleaned
 
 
-# -----------------------------
 # Extract OpenIE triples
-# -----------------------------
 def extract_triples(text):
     triples = []
 
@@ -143,15 +126,13 @@ def extract_triples(text):
                 })
 
     except Exception:
-        # ❗ 不打印，避免刷屏 + 提升速度
+
         return []
 
     return clean_triples(triples)
 
 
-# -----------------------------
 # Process one document
-# -----------------------------
 def process_document(doc):
 
     for sec in doc.get("sections", []):
@@ -166,17 +147,13 @@ def process_document(doc):
             if not text:
                 continue
 
-            # --- NLP ---
             sent["entities"] = extract_entities(text)
             sent["triples"] = extract_triples(text)
             sent["negation"] = detect_negation(text)
 
     return doc
 
-
-# -----------------------------
 # MAIN
-# -----------------------------
 def main():
 
     client = MongoClient("mongodb://localhost:27017/")
@@ -202,8 +179,6 @@ def main():
     print("\nDone. Data saved to Encyclopedia_KB")
 
 
-# -----------------------------
 # RUN
-# -----------------------------
 if __name__ == "__main__":
     main()
