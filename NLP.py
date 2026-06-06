@@ -174,7 +174,7 @@ def main():
         new_doc = process_document(doc)
         target_col.insert_one(new_doc)
 
-        time.sleep(0.02)  # 更快
+        time.sleep(0.02)  
 
     print("\nDone. Data saved to Encyclopedia_KB")
 
