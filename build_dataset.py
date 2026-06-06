@@ -39,7 +39,7 @@ def extract_sections(soup):
         for p in body.find_all("p"):
             text = p.get_text(" ", strip=True)
 
-            # ❌ 跳过 list 引导句
+    
             if text.endswith(":"):
                 continue
 
@@ -129,7 +129,6 @@ def build_dataset(topic_links):
             data = parse_article(i, item)
             dataset.append(data)
 
-            # 🔥 防止被封
             time.sleep(0.2)
 
         except Exception as e:
@@ -159,7 +158,7 @@ def save_mongodb(data):
 
 if __name__ == "__main__":
     topic_links = get_topic_links()
-    print("Total links:", len(topic_links))  # 应该 ≈ 4438
+    print("Total links:", len(topic_links)) 
 
     dataset = build_dataset(topic_links)
 
